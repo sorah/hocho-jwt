@@ -45,9 +45,11 @@ module Hocho
         headers = {}
         headers[:kid] = @kid if @kid
 
+        payload = generate_payload(request, host)
         host.attributes[@target] = {
+          payload: payload,
           token: Token.new(
-            payload(request, host),
+            payload,
             headers,
             @signing_key,
             @algorithm,
@@ -76,7 +78,7 @@ module Hocho
 
       Request = Struct.new(:issue, :duration, :claims, :fail_when_no_signing_key, keyword_init: true)
 
-      def payload(request, host)
+      def generate_payload(request, host)
         now = Time.now
         data = {
           sub: @sub_template.new(host).result(),
