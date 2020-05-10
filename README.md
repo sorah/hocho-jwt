@@ -50,7 +50,6 @@ property_providers:
         # pem_file: /path/to/jwk
         # pem_env: HOCHO_JWT_KEY
 
-
       ## Templates are rendered using ERB, and `host` (Hocho::Host) is given. 
       ## Invalid DNS names will be removed.
       sub_template: "<%= host.name %>"

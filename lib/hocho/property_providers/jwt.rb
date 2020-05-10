@@ -7,6 +7,17 @@ require 'hocho/property_providers/base'
 module Hocho
   module PropertyProviders
     class Jwt < Base
+      Token = Struct.new(:payload, :headers, :signing_key, :algorithm) do
+        def to_s
+          JWT.encode(
+            payload,
+            signing_key,
+            algorithm,
+            headers,
+          )
+        end
+      end
+
       def initialize(algorithm:, signing_key:, sub_template:)
         @algorithm = algorithm
         @signing_key, @kid = load_key(**(signing_key || {}))
@@ -34,11 +45,11 @@ module Hocho
         headers[:kid] = @kid if @kid
 
         host.attributes[:hocho_jwt] = {
-          token: JWT.encode(
+          token: Token.new(
             payload(request, host),
+            headers,
             @signing_key,
             @algorithm,
-            headers,
           ),
         }
 
@@ -61,7 +72,6 @@ module Hocho
           self.class.erb.result(binding)
         end
       end
-
 
       Request = Struct.new(:issue, :duration, :claims, :fail_when_no_signing_key, keyword_init: true)
 

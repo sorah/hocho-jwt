@@ -36,7 +36,7 @@ RSpec.describe Hocho::PropertyProviders::Jwt do
 
       subject(:decoded_jwt) do
         JWT.decode(
-          host.attributes.dig(:hocho_jwt, :token),
+          host.attributes.dig(:hocho_jwt, :token).to_s,
           PUBLIC_KEY,
           true,
           algorithm: 'ES256',
