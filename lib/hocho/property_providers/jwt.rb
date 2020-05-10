@@ -9,7 +9,7 @@ module Hocho
     class Jwt < Base
       def initialize(algorithm:, signing_key:, sub_template:)
         @algorithm = algorithm
-        @signing_key = load_key(**(signing_key || {}))
+        @signing_key, @kid = load_key(**(signing_key || {}))
         @sub_template = Class.new(Template).tap { |t| t.erb = ERB.new(sub_template) }
       end
 
@@ -30,11 +30,15 @@ module Hocho
           end
         end
 
+        headers = {}
+        headers[:kid] = @kid if @kid
+
         host.attributes[:hocho_jwt] = {
           token: JWT.encode(
             payload(request, host),
             @signing_key,
             @algorithm,
+            headers,
           ),
         }
 
@@ -74,7 +78,7 @@ module Hocho
         data.merge(request.claims)
       end
 
-      def load_key(pem_string: nil, pem_file: nil, pem_env: nil)
+      def load_key(pem_string: nil, pem_file: nil, pem_env: nil, kid_string: nil, kid_file: nil, kid_env: nil)
         pem = case
         when pem_string
           pem_string.to_s
@@ -91,7 +95,16 @@ module Hocho
         end
         return nil unless pem
 
-        case @algorithm
+        kid = case
+        when kid_string
+          kid_string.to_s
+        when kid_file
+          File.read(kid_string).chomp
+        when kid_env
+          ENV.fetch(kid_env)
+        end
+
+        key = case @algorithm
         when /^ES/
           OpenSSL::PKey::EC.new(pem, '')
         when /^RS/
@@ -99,6 +112,8 @@ module Hocho
         else
           raise ArgumentError, "unsupported cipher algorithm"
         end
+
+        [key, kid]
       end
     end
   end

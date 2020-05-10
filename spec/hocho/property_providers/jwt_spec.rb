@@ -34,13 +34,21 @@ RSpec.describe Hocho::PropertyProviders::Jwt do
       let(:properties) { { issue: true, claims: { aud: 'test' } }  }
       let(:now) { Time.now }
 
-      subject do
+      subject(:decoded_jwt) do
         JWT.decode(
           host.attributes.dig(:hocho_jwt, :token),
           PUBLIC_KEY,
           true,
           algorithm: 'ES256',
-        )[0]
+        )
+      end
+
+      subject(:jwt_header) do
+        decoded_jwt[1]
+      end
+
+      subject do
+        decoded_jwt[0]
       end
 
       before do
@@ -65,6 +73,18 @@ RSpec.describe Hocho::PropertyProviders::Jwt do
         end
       end
 
+
+      describe "kid" do
+        let(:signing_key) { { pem_string: KEY.to_pem, kid_string: 'keyid' } }
+
+        it "issues JWT with kid" do
+          provider.determine(host)
+          expect(jwt_header['kid']).to eq('keyid')
+        end
+      end
+
+
+
       describe "fail_when_no_signing_key=false" do
         let(:properties) { { issue: true, fail_when_no_signing_key: false} }
         let(:signing_key) { nil }
@@ -85,7 +105,6 @@ RSpec.describe Hocho::PropertyProviders::Jwt do
           }.to raise_error(ArgumentError)
         end
       end
-
     end
   end
 end

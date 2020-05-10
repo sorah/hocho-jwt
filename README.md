@@ -41,9 +41,15 @@ property_providers:
       # EC256: openssl ecparam -name prime256v1 -genkey -noout -out key.pem
       # RS256: openssl genrsa -noout -out key.pem 2048
       signing_key:
+        ## Key ID
+        # kid_string: key-id
+        # kid_file: path/to/kid
+        # kid_env: HOCHO_JWT_KID
+        ## String to PEM or Base64 encoded DER
         # pem_string: "..."
         # pem_file: /path/to/jwk
         # pem_env: HOCHO_JWT_KEY
+
 
       ## Templates are rendered using ERB, and `host` (Hocho::Host) is given. 
       ## Invalid DNS names will be removed.
