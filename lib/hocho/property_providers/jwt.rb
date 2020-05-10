@@ -18,10 +18,11 @@ module Hocho
         end
       end
 
-      def initialize(algorithm:, signing_key:, sub_template:)
+      def initialize(algorithm:, signing_key:, sub_template:, target: :hocho_jwt)
         @algorithm = algorithm
         @signing_key, @kid = load_key(**(signing_key || {}))
         @sub_template = Class.new(Template).tap { |t| t.erb = ERB.new(sub_template) }
+        @target = target
       end
 
       def determine(host)
@@ -29,9 +30,9 @@ module Hocho
           issue: false,
           claims: {},
           fail_when_no_signing_key: true,
-        }.merge(host.properties[:hocho_jwt] || {}))
+        }.merge(host.properties[@target] || {}))
 
-        return unless host.properties.dig(:hocho_jwt, :issue)
+        return unless host.properties.dig(@target, :issue)
 
         unless @signing_key
           if request.fail_when_no_signing_key
@@ -44,7 +45,7 @@ module Hocho
         headers = {}
         headers[:kid] = @kid if @kid
 
-        host.attributes[:hocho_jwt] = {
+        host.attributes[@target] = {
           token: Token.new(
             payload(request, host),
             headers,
