@@ -98,7 +98,7 @@ module Hocho
         when pem_file
           File.read(pem_string) rescue nil
         when pem_env
-          ENV[pem_env].yield_self do |e|
+          ENV[pem_env]&.yield_self do |e|
             if e.start_with?('-----')
               e
             else
